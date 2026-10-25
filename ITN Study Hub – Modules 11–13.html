@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ITN Study Hub – Modules 11–13</title>
+<style>
+:root{--bg:#eef2f7;--cd:#fff;--tx:#14202e;--mu:#586a7c;--ac:#0b78c9;--ok:#14803c;--bd:#cfd8e3;--bd2:#c62828;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root[data-theme=dark]{--bg:#0b1520;--cd:#132233;--tx:#e6eef7;--mu:#93a7bb;--ac:#4cc3ff;--ok:#4ade80;--bd:#27425c;--bd2:#ff8080;color-scheme:dark}
+@page{size:A4;margin:14mm}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header,main,footer{max-width:900px;margin:auto;padding:12px 14px}
+h1{font-size:1.3rem;margin:0}h1 small{color:var(--mu);font-weight:400}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+button,input,select{font:inherit;color:var(--tx);background:var(--cd);border:1px solid var(--bd);border-radius:8px;padding:8px 12px}
+input{flex:1;min-width:140px}button{cursor:pointer}
+button:hover,button.on{border-color:var(--ac);color:var(--ac)}button.ok{border-color:var(--ok);color:var(--ok)}
+.bar{height:8px;background:var(--bd);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--ac);transition:width .3s}
+.mu{color:var(--mu);font-size:.9rem}
+.card{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:12px 16px;margin:10px 0}
+summary{cursor:pointer;font-weight:600}li{margin:6px 0}
+code,pre{background:var(--bg);border-radius:5px;font-family:ui-monospace,Consolas,monospace;font-size:.9em}code{padding:1px 5px}pre{padding:8px;overflow-x:auto}
+.sc{overflow-x:auto}table{border-collapse:collapse;width:100%;margin:8px 0}td,th{border:1px solid var(--bd);padding:4px 8px;text-align:left}
+.fc{min-height:170px;cursor:pointer;display:flex;flex-direction:column;justify-content:center;text-align:center;font-size:1.15rem}
+.op{display:block;width:100%;text-align:left;margin:6px 0}.good{border-color:var(--ok)!important;color:var(--ok)!important}.wrong{border-color:var(--bd2)!important;color:var(--bd2)!important}
+footer{text-align:center;color:var(--mu);font-size:.9rem}
+@media print{button,nav,.bar{display:none}}
+</style></head><body>
+<header>
+<div class="row"><h1>ITN Study Hub <small>Modules 11–13</small></h1><button onclick="th()" style="margin-left:auto">◐ Light / Dark</button></div>
+<nav id="mods" class="row"></nav><nav id="modes" class="row"></nav>
+<div class="bar"><i id="pb"></i></div><div id="pt" class="mu"></div>
+</header>
+<main id="v"></main>
+<footer>Modau.M IT</footer>
+<script>
+const $=s=>document.querySelector(s),f=s=>s.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/`(.+?)`/g,"<code>$1</code>");
+const ST={g(k,d){try{let v=localStorage.getItem("itn_"+k);return v?JSON.parse(v):d}catch(e){return d}},s(k,v){try{localStorage.setItem("itn_"+k,JSON.stringify(v))}catch(e){}}};
+const mk=p=>{let m=p?(0xffffffff<<(32-p))>>>0:0;return[m>>>24,m>>16&255,m>>8&255,m&255].join(".")};
+const ip2n=s=>{let a=s.trim().split(".");if(a.length!=4||a.some(x=>!/^\d{1,3}$/.test(x)||+x>255))return null;return((+a[0]<<24)|(+a[1]<<16)|(+a[2]<<8)|+a[3])>>>0};
+const n2ip=n=>[n>>>24,n>>16&255,n>>8&255,n&255].join(".");
+const bin=n=>n2ip(n).split(".").map(x=>(+x).toString(2).padStart(8,"0")).join(".");
+const T=(b,a,z)=>{let r="<table><tr><th>Prefix<th>Mask<th>Subnets<th>Hosts/subnet";for(let p=a;p<=z;p++)r+=`<tr><td>/${p}<td>${mk(p)}<td>${(2**(p-b)).toLocaleString()}<td>${(2**(32-p)-2).toLocaleString()}`;return r+"</table>"};
+
+const D={
+11:{t:"IPv4 Addressing",n:[
+["Address structure",[
+"IPv4 = **32-bit hierarchical** address: **network portion** + **host portion**. The **subnet mask** (compared bit-for-bit, left to right) shows which is which.",
+"**Prefix length** = number of 1s in the mask: /8 255.0.0.0 · /16 255.255.0.0 · /24 255.255.255.0 · /25 .128 · /26 .192 · /27 .224 · /28 .240 · /29 .248 · /30 .252",
+"**Logical AND** (1∧1 = 1, every other combo = 0) of host IP and mask = **network address**.",
+"Per network: **network address** (host bits all 0s) · **first usable** (…0001) · **last usable** (…1110) · **broadcast** (host bits all 1s). Example 192.168.10.0/24 → first .1, last .254, broadcast .255."]],
+["Unicast, broadcast, multicast",[
+"**Unicast** – one destination (172.16.4.1 → printer 172.16.4.253).",
+"**Broadcast** – all hosts in the broadcast domain.",
+"**Multicast** – a group address (e.g. 224.10.10.5; Class D 224–239)."]],
+["Public, private & special addresses",[
+"**RFC 1918 private** (not globally routable, reusable internally): `10.0.0.0/8` (10.0.0.0–10.255.255.255) · `172.16.0.0/12` (172.16.0.0–172.31.255.255) · `192.168.0.0/16`.",
+"**Public** addresses are routed globally between ISP routers. **NAT** (usually on the edge router) translates private → public.",
+"**Loopback** `127.0.0.0/8` (127.0.0.1) tests TCP/IP on the host. **Link-local / APIPA** `169.254.0.0/16` – Windows DHCP clients self-assign when no DHCP server answers.",
+"**Legacy classful** (RFC 790): A 0–127 (/8) · B 128–191 (/16) · C 192–223 (/24) · D 224–239 · E 240–255. It wasted addresses → replaced by **classless** addressing.",
+"**IANA** → 5 **RIRs** (AfriNIC, APNIC, ARIN, LACNIC, RIPE NCC) → ISPs → organisations."]],
+["Why segment: broadcast domains",[
+"ARP and DHCP Discover use broadcasts. Switches flood broadcasts out every port except the one received on; **only routers stop broadcasts** – each router interface = one broadcast domain.",
+"Large broadcast domains = excessive broadcasts hurting the network. Fix: **subnetting**, e.g. 172.16.0.0/16 → 172.16.0.0/24 + 172.16.1.0/24.",
+"Benefits: less traffic/better performance · security policies between subnets · fewer devices hit by abnormal broadcasts. Subnet by **location, group/function, device type**."]],
+["Subnetting a /24 + octet boundaries",[
+"Easiest on octet boundaries: /8 → 16,777,214 hosts · /16 → 65,534 · /24 → 254. Longer prefix = fewer hosts per subnet.",
+"**Formulas:** subnets = 2ⁿ (n = borrowed bits) · usable hosts = 2ʰ − 2 (h = host bits; minus network & broadcast).",
+"Magic number = 256 − last mask octet (/26 → 64, so subnets start at .0, .64, .128, .192)."],()=>T(24,25,30)],
+["Subnetting a /16 and a /8",[
+"Borrow host bits; the **last 2 host bits can’t be borrowed** (max /30).",
+"**172.16.0.0/16, ≥100 subnets** → borrow **7 bits** (2⁷ = 128) → /23.",
+"**10.0.0.0/8, ≥1000 subnets** → borrow **10 bits** (2¹⁰ = 1024) → /18. (Slide says “total of 128” – typo, it’s 1024.)"],()=>T(16,17,30)],
+["Subnet to meet requirements",[
+"Two questions: **hosts per subnet** and **number of subnets**. Enterprises have an **intranet** (private IPs) and a **DMZ** (internet-facing servers, **public** IPs).",
+"Example: HQ gets 172.16.0.0/22 (10 host bits, 1,022 hosts), needs 10 subnets, largest needs 40 hosts → **/26** (255.255.255.192, 62 hosts)."]],
+["VLSM",[
+"Problem: 4 LANs + 3 WAN links = 7 subnets, biggest LAN 28 hosts → a /27 (8 subnets × 30 hosts) fits, but each 2-host WAN link wastes 28 addresses (**84 wasted**).",
+"**VLSM** = subnet a subnet → different mask lengths inside one address space.",
+"Rule: **start with the largest host requirement**, continue until the smallest is met. The spare /27 is split into eight **/30** subnets (2 hosts each) for the WAN links."]],
+["Structured design",[
+"Plan: subnets needed, hosts per subnet, devices, private vs public, DHCP pools, Layer 2 VLAN pools.",
+"**End-user clients** → DHCP (IPv6: DHCPv6/SLAAC) · **servers & peripherals** → predictable **static** IPs · **internet-accessible servers** → public IPv4 (via NAT) · **intermediary devices** → management/monitoring/security addresses · **gateways** (routers/firewalls) → default gateway for the hosts.",
+"Use a **consistent pattern** for allocating addresses per device type."]]],
+c:[
+"How many bits in an IPv4 address and what are its two parts?|32 bits: network portion + host portion",
+"What does a subnet mask do?|Separates network bits from host bits",
+"What is the prefix length?|The number of 1-bits in the mask (slash notation, e.g. /24)",
+"How do you find the network address?|Logical AND of the IP address and the subnet mask",
+"Network vs broadcast bit pattern?|Network = host bits all 0s; broadcast = host bits all 1s",
+"First and last usable host?|First = host bits 0…01; last = 1…10 (.1 and .254 in a /24)",
+"RFC 1918 private ranges?|10.0.0.0/8 · 172.16.0.0/12 · 192.168.0.0/16",
+"What does NAT do?|Translates private IPv4 addresses to public ones (edge router)",
+"Loopback range and use?|127.0.0.0/8 – tests TCP/IP on the host",
+"APIPA range?|169.254.0.0/16 – self-assigned when no DHCP server",
+"Only device that stops broadcasts?|A router (each interface = a broadcast domain)",
+"Subnet and host formulas?|Subnets = 2ⁿ (borrowed bits); hosts = 2ʰ − 2",
+"Usable hosts in /26, /27, /28?|62 · 30 · 14",
+"What is VLSM and its key rule?|Subnetting a subnet for unequal sizes; satisfy the largest requirement first",
+"Who allocates IP blocks?|IANA → 5 RIRs (AfriNIC, APNIC, ARIN, LACNIC, RIPE NCC) → ISPs",
+"Who gets public IPs: servers or clients?|Internet-accessible servers (DMZ); clients use private + NAT"],
+q:[
+"Which operation derives the network address?|AND of IP and mask|OR of IP and mask|XOR of IP and mask|NOT of the mask",
+"Broadcast address of 192.168.10.0/24?|192.168.10.255|192.168.10.254|192.168.10.1|192.168.255.255",
+"Which is NOT an RFC 1918 range?|169.254.0.0/16|10.0.0.0/8|172.16.0.0/12|192.168.0.0/16",
+"Usable hosts in a /27?|30|32|31|62",
+"Which device stops broadcasts?|Router|Switch|Hub|Repeater",
+"A DHCP client with no server self-assigns from…|169.254.0.0/16|127.0.0.0/8|10.0.0.0/8|192.168.0.0/16",
+"Bits to borrow from a /16 for ≥100 subnets?|7|6|8|5",
+"What is the VLSM rule?|Satisfy the largest host requirement first|Satisfy the smallest first|Use one mask everywhere|Subnet only on octet boundaries",
+"Network address of 172.16.5.77/26?|172.16.5.64|172.16.5.0|172.16.5.76|172.16.5.128",
+"Usable hosts in a /30?|2|4|6|1"]},
+12:{t:"IPv6 Addressing",n:[
+["Why IPv6 + coexistence",[
+"IPv4 is exhausted (theoretical max ≈ 4.3 billion). **IPv6 = 128 bits**, plus fixes for IPv4 limits (NAT issues, IoT growth).",
+"RIR exhaustion: LACNIC Apr 2011 · RIPE NCC Sep 2012 · APNIC Jun 2014 · ARIN Jul 2015 · AfriNIC projected 2020.",
+"Migration (IETF): **Dual stack** (both stacks at once) · **Tunneling** (IPv6 packet inside an IPv4 packet) · **Translation** (**NAT64**). Tunneling/translation only when needed – goal is native IPv6."]],
+["Representation & abbreviation",[
+"128 bits in hex, **not case-sensitive**, x:x:x:x:x:x:x:x – **8 hextets** (16 bits = 4 hex digits each).",
+"**Rule 1:** omit **leading** zeros only (never trailing): 0db8 → db8, 0000 → 0.",
+"**Rule 2:** `::` replaces **one** contiguous run of all-zero hextets – **only once** per address.",
+"2001:0db8:0000:1111:0000:0000:0000:0200 → `2001:db8:0:1111::200`"]],
+["Address types & prefix length",[
+"**Unicast** (one interface) · **multicast** (one packet to many) · **anycast** (unicast address on several devices; nearest one answers). **No broadcast** – all-nodes multicast `ff02::1` does that job.",
+"Prefix length 0–128; **/64 recommended** for LANs (SLAAC needs a 64-bit interface ID; easier subnetting).",
+"Unicast types: **GUA** · **LLA** · loopback `::1/128` · unspecified `::/128` · **unique local** `fc00::/7` (fc00–fdff) · embedded IPv4. Devices typically have **two**: GUA + LLA."]],
+["GUA & ULA",[
+"**GUA** = globally unique, internet-routable (like public IPv4). Assigned range `2000::/3` (first bits 001 → first hextet 2000–3fff, starts with 2 or 3; 1/8 of the space).",
+"Structure: **Global Routing Prefix** (from ISP) + **Subnet ID** (your subnets) + **Interface ID** (host part). All-0s ID = Subnet-Router anycast (routers only).",
+"**ULA** `fc00::/7`: local to a site/few sites, never globally routed or translated. Like RFC 1918, but not meant for hiding a network."]],
+["Link-local address (LLA)",[
+"Range `fe80::/10`. Same **link only** – packets with an LLA source/destination are **never routed**. **Every** IPv6 interface must have one (auto-created if not set).",
+"Routers use neighbours’ LLAs for routing updates; hosts use the router’s LLA as **default gateway** (best practice; automatic with SLAAC/DHCPv6)."]],
+["Static config (Cisco IOS)",[
+"GUA: `interface g0/0/0` → `ipv6 address 2001:db8:acad:1::1/64` → `no shutdown`",
+"LLA: `ipv6 address fe80::1:1 link-local` (easy to recognise; same LLA may be reused on different links – must be unique per link).",
+"`ipv6 unicast-routing` (global) makes the router join **ff02::2**. Verify with `show ipv6 interface brief`.",
+"Windows host: set IPv6 address, prefix length (64) and default gateway (GUA or, best, the LLA)."]],
+["Dynamic GUA: RS, RA, 3 methods",[
+"**RS** (host → routers) · **RA** (router → hosts: prefix, prefix length, gateway, DNS, domain). RAs go out **every 200 s** and in reply to an RS. Both are ICMPv6.",
+"**Method 1 – SLAAC:** no DHCPv6. Prefix from the RA; device builds its own interface ID.",
+"**Method 2 – SLAAC + stateless DHCPv6:** SLAAC makes the GUA, gateway = router LLA, **DHCPv6 gives DNS/domain** only.",
+"**Method 3 – Stateful DHCPv6 (no SLAAC):** like DHCPv4 – server gives GUA, prefix length, DNS, domain; gateway still = router LLA."]],
+["Interface IDs: EUI-64, random, DAD",[
+"With SLAAC the **client builds its own interface ID**: **EUI-64** or a **random 64-bit number** (Windows since Vista = random).",
+"**EUI-64:** insert **fffe** in the middle of the 48-bit MAC and **flip the 7th bit**. MAC fc:99:47:75:ce:e0 → `fe99:47ff:fe75:cee0` (some slide screenshots show fc99… – the flip gives fe99).",
+"**DAD:** host sends an NS for its own address; **no reply = unique**. Not required, but RFC 4861 recommends it.",
+"**Dynamic LLA** = `fe80::/10` + EUI-64 or random ID. Cisco routers auto-create an LLA when a GUA is set (EUI-64 by default), e.g. MAC 7079.b392.3640 → FE80::7279:B3FF:FE92:3640."]],
+["Multicast",[
+"Prefix `ff00::/8`; only ever a **destination**. Two kinds: **well-known** and **solicited-node**.",
+"`ff02::1` **all-nodes** · `ff02::2` **all-routers**.",
+"**Solicited-node** multicast maps to a special Ethernet multicast MAC so the NIC can filter frames without involving the IPv6 process."]],
+["Subnetting IPv6",[
+"**/48** routing prefix + **16-bit subnet ID** = /64 subnets → **65,536 subnets** (0000–ffff). Only the subnet-ID hextet is **incremented in hex**.",
+"2001:db8:acad::/48 → 2001:db8:acad:**0001**::/64, …:**0002**::/64 … …:**ffff**::/64. Example: 4 LANs + 1 serial link = 5 subnets (0001–0005).",
+"R1: g0/0/0 `2001:db8:acad:1::1/64`, g0/0/1 `…:2::1/64`, s0/1/0 `…:3::1/64` (each with `no shutdown`)."]]],
+c:[
+"IPv6 address size and notation?|128 bits, 8 hextets of 4 hex digits, not case-sensitive",
+"Abbreviation Rule 1?|Omit leading zeros in a hextet (never trailing)",
+"Abbreviation Rule 2?|:: replaces one run of all-zero hextets – once only",
+"Compress 2001:0db8:0000:1111:0000:0000:0000:0200|2001:db8:0:1111::200",
+"Three IPv6 address categories?|Unicast, multicast, anycast (no broadcast)",
+"Recommended LAN prefix length and why?|/64 – SLAAC uses a 64-bit interface ID; easier subnetting",
+"GUA range?|2000::/3 (first hextet 2000–3fff)",
+"LLA range and scope?|fe80::/10 – same link only, never routed",
+"ULA range?|fc00::/7 (fc00–fdff) – local, not globally routed",
+"Loopback and unspecified addresses?|::1/128 and ::/128",
+"Command to set a GUA on a router interface?|ipv6 address 2001:db8:acad:1::1/64",
+"Command to set a manual LLA?|ipv6 address fe80::1:1 link-local",
+"Command to verify IPv6 interfaces?|show ipv6 interface brief",
+"What does ipv6 unicast-routing do?|Enables IPv6 routing; router joins ff02::2",
+"RS vs RA?|RS: host asks for routers. RA: router sends prefix, length, gateway, DNS (every 200 s or in reply to RS)",
+"Three RA methods for a GUA?|SLAAC · SLAAC + stateless DHCPv6 · stateful DHCPv6",
+"EUI-64 steps?|Insert fffe in the middle of the MAC; flip the 7th bit",
+"EUI-64 interface ID for fc:99:47:75:ce:e0?|fe99:47ff:fe75:cee0",
+"What is DAD?|Host sends NS for its own address; no reply = unique",
+"ff02::1 and ff02::2?|All-nodes and all-routers multicast",
+"IPv6 migration techniques?|Dual stack, tunneling, translation (NAT64)",
+"/64 subnets in a /48?|65,536 (16-bit subnet ID)",
+"Default gateway given to SLAAC/DHCPv6 hosts?|The router’s link-local address"],
+q:[
+"How many bits in an IPv6 address?|128|64|32|256",
+"Correct compression of 2001:0db8:0000:0000:0000:0000:0000:0001?|2001:db8::1|2001:db8:0::1|2001::db8::1|2001:db8:::1",
+"Which address type does IPv6 NOT have?|Broadcast|Unicast|Multicast|Anycast",
+"LLAs live in which prefix?|fe80::/10|fc00::/7|2000::/3|ff00::/8",
+"Which command sets a link-local address?|ipv6 address fe80::1:1 link-local|ipv6 link-local fe80::1:1|ip address fe80::1:1|ipv6 lla fe80::1:1",
+"Which RA method uses a DHCPv6 server for the GUA and no SLAAC?|Stateful DHCPv6|SLAAC|Stateless DHCPv6|EUI-64",
+"EUI-64 ID for MAC 00:1a:2b:3c:4d:5e?|021a:2bff:fe3c:4d5e|001a:2bff:fe3c:4d5e|021a:2b3c:4d5e:fffe|001a:2b3c:4d5e:fffe",
+"All-routers multicast address?|ff02::2|ff02::1|ff00::2|fe80::2",
+"/64 subnets available in a /48?|65,536|256|16|4,294,967,296",
+"What does a host send for DAD?|NS for its own address|RS to a router|ARP broadcast|Ping to ::1",
+"With SLAAC, the default gateway is…|the router’s link-local address|the router’s GUA|::1|ff02::2"]},
+13:{t:"ICMP",n:[
+["ICMP basics",[
+"ICMP gives **feedback about problems processing IP packets**. ICMPv4 serves IPv4; ICMPv6 serves IPv6 (extra functions). ICMPv4 is often blocked for security.",
+"Common to both: **host reachability** (echo request/reply) · **destination/service unreachable** · **time exceeded**."]],
+["Unreachable & time exceeded",[
+"**ICMPv4 Dest Unreachable codes:** 0 net · 1 host · 2 protocol · 3 port.",
+"**ICMPv6 codes:** 0 no route to destination · 1 administratively prohibited (e.g. firewall) · 2 beyond scope of source address · 3 address unreachable · 4 port unreachable.",
+"**Time Exceeded:** sent when **TTL** (IPv4) / **Hop Limit** (IPv6) hits 0. Used by **traceroute**."]],
+["ICMPv6 Neighbor Discovery",[
+"Router ↔ device: **RS** and **RA** (dynamic addressing). Device ↔ device: **NS** and **NA**, plus **redirect** (like ICMPv4).",
+"**RA** every 200 s or answering an RS: prefix, prefix length, DNS, domain. SLAAC hosts set **default gateway = router’s LLA**.",
+"**DAD:** NS with the device’s own address as target; an NA reply means it’s in use.",
+"**Address resolution** (IPv6 ‘ARP’): NS to the **solicited-node address** with the known IPv6; the owner replies with an **NA containing its MAC**."]],
+["Ping",[
+"Uses **echo request / echo reply** (IPv4 & IPv6); reports success rate and average round-trip time. IOS: `!` = reply, `.` = timeout. The first ping often times out because **ARP/ND** must run first.",
+"**Ping loopback** (127.0.0.1 / ::1) → IP stack on the host works. Error = TCP/IP not operational.",
+"**Ping default gateway** → host and gateway interface work on the local network (no reply? ping another known-good local host).",
+"**Ping remote host** → communication across the internetwork. No reply may just be **ICMP filtering** by admins."]],
+["Traceroute / tracert",[
+"`tracert` (Windows) / `traceroute` (IOS): lists the **hops** on the path with **round-trip time** per hop; `*` = lost/unreplied packet. Helps locate a problem router (or one configured not to reply).",
+"How: first packet has **TTL = 1** → first router returns **Time Exceeded**; TTL then increments (2, 3, 4…) until the destination answers or a maximum is reached. Uses TTL/Hop Limit + ICMP Time Exceeded."]]],
+c:[
+"What is ICMP for?|Feedback about problems processing IP packets, plus testing (ping/traceroute)",
+"Three messages common to ICMPv4 and ICMPv6?|Host reachability, destination/service unreachable, time exceeded",
+"Which ICMP messages does ping use?|Echo request and echo reply",
+"ICMPv4 Dest Unreachable codes 0–3?|Net, host, protocol, port",
+"ICMPv6 Dest Unreachable codes 0–4?|No route · admin prohibited · beyond scope · address unreachable · port unreachable",
+"When is Time Exceeded sent?|TTL (IPv4) / Hop Limit (IPv6) reaches 0",
+"Four ICMPv6 ND messages?|RS, RA, NS, NA (plus redirect)",
+"What does ping 127.0.0.1 / ::1 test?|The TCP/IP stack on the local host",
+"A successful ping to the default gateway proves…|Host and gateway interface work on the local network",
+"Why might the first ping time out?|ARP (IPv4) / ND (IPv6) must resolve the address first",
+"Ping fails but the host is up – why?|ICMP may be filtered/blocked for security",
+"What does * mean in traceroute?|Lost or unreplied packet",
+"How does traceroute work?|TTL 1, 2, 3… – each router returns Time Exceeded, revealing the hops, until the destination or a max",
+"tracert vs traceroute?|tracert = Windows; traceroute = Cisco IOS/Linux",
+"How does IPv6 find a MAC for an IPv6 address?|NS to the solicited-node multicast; NA returns the MAC",
+"IOS ping symbols?|! = reply · . = timeout"],
+q:[
+"Which ICMP messages does ping use?|Echo request/reply|Time exceeded|Redirect|RS/RA",
+"Ping to 127.0.0.1 succeeds. This proves…|The local TCP/IP stack works|The gateway is up|The internet is reachable|DNS works",
+"Traceroute relies on which ICMP message?|Time Exceeded|Echo reply only|Destination Unreachable|Redirect",
+"What does * mean in tracert output?|Lost/unreplied packet|Destination reached|Fastest hop|Loop detected",
+"ICMPv6 equivalent of the IPv4 TTL field?|Hop Limit|Flow Label|Next Header|Traffic Class",
+"Which ND message carries the prefix to hosts?|RA|RS|NS|NA",
+"Which messages resolve an IPv6 address to a MAC?|NS then NA|RS then RA|Echo request/reply|ARP request",
+"TTL of the first traceroute packet?|1|0|64|255",
+"ICMPv6 Dest Unreachable code 1 means?|Administratively prohibited|No route|Port unreachable|Address unreachable",
+"Why might the first ping time out?|ARP/ND resolution comes first|Gateway is down|TTL = 0|DNS lookup"]}
+};
+
+let P=ST.g("p",{}),M=11,V="n",CI=0,FL=false,Q=null;
+const pm=m=>P[m]||(P[m]={d:[],k:[],b:0}),save=()=>ST.s("p",P);
+const pct=m=>{let d=D[m],p=pm(m);return Math.round(100*(p.d.length+p.k.length)/(d.n.length+d.c.length))};
+const sh=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){let j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+function th(){let r=document.documentElement;r.dataset.theme=r.dataset.theme=="light"?"dark":"light";ST.s("th",r.dataset.theme)}
+document.documentElement.dataset.theme=ST.g("th","dark");
+
+function bar(){
+ let o=Object.keys(D).map(pct),a=Math.round(o.reduce((x,y)=>x+y,0)/o.length);
+ $("#pb").style.width=a+"%";$("#pt").textContent=`Overall ${a}% · M${M} quiz best ${pm(M).b}%`;
+ $("#mods").innerHTML=Object.keys(D).map(m=>`<button class="${m==M?"on":""}" onclick="M=${m};V='n';CI=0;FL=false;draw()">M${m} ${D[m].t} · ${pct(m)}%</button>`).join("");
+ $("#modes").innerHTML=[["n","Notes"],["c","Flashcards"],["z","Quiz"],["t","Tools"]].map(x=>`<button class="${x[0]==V?"on":""}" onclick="V='${x[0]}';draw()">${x[1]}</button>`).join("")}
+function draw(){bar();({n:notes,c:cards,z:quiz,t:tools})[V]()}
+
+function notes(){let d=D[M],p=pm(M);
+ $("#v").innerHTML=d.n.map((s,i)=>{let dn=p.d.includes(i);return `<details class="card"><summary><span class="mk">${dn?"✅ ":""}</span>${s[0]}</summary><ul>${s[1].map(b=>"<li>"+f(b)+"</li>").join("")}</ul>${s[2]?`<div class="sc">${s[2]()}</div>`:""}<button onclick="tog(${i},this)">${dn?"Mark as not done":"Mark as done"}</button></details>`}).join("")}
+function tog(i,b){let p=pm(M),k=p.d.indexOf(i);k<0?p.d.push(i):p.d.splice(k,1);save();let dn=k<0;
+ b.closest("details").querySelector(".mk").textContent=dn?"✅ ":"";b.textContent=dn?"Mark as not done":"Mark as done";bar()}
+
+function cards(){let d=D[M],p=pm(M),c=d.c[CI].split("|");
+ $("#v").innerHTML=`<p class="mu">Card ${CI+1}/${d.c.length} · known ${p.k.length}</p><div class="fc card" onclick="FL=!FL;cards()"><small class="mu">${FL?"ANSWER":"QUESTION"} · tap to flip</small><div>${f(FL?c[1]:c[0])}</div></div><div class="row"><button onclick="mv(-1)">←</button><button onclick="kn(0)">Again</button><button class="ok" onclick="kn(1)">Got it ✓</button><button onclick="mv(1)">→</button></div><p>${p.k.includes(CI)?"✅ Marked known":""}</p><button onclick="pm(M).k=[];save();bar();cards()">Reset known</button>`}
+function mv(n){let L=D[M].c.length;CI=(CI+n+L)%L;FL=false;cards()}
+function kn(y){let p=pm(M),k=p.k.indexOf(CI);if(y&&k<0)p.k.push(CI);if(!y&&k>=0)p.k.splice(k,1);save();bar();mv(1)}
+
+function quiz(){
+ if(!Q||Q.m!=M)Q={m:M,i:0,s:0,done:null,a:sh(D[M].q).map(r=>{let x=r.split("|");return{q:x[0],c:x[1],o:sh(x.slice(1))}})};
+ else if(Q.done!==null){Q.i++;Q.done=null}
+ if(Q.i>=Q.a.length){let r=Math.round(100*Q.s/Q.a.length),p=pm(M);if(r>p.b){p.b=r;save();bar()}
+  $("#v").innerHTML=`<div class="card"><h2>Score: ${Q.s}/${Q.a.length} (${r}%)</h2><p>Best: ${p.b}%</p><button onclick="Q=null;quiz()">Retry</button></div>`;return}
+ let q=Q.a[Q.i];
+ $("#v").innerHTML=`<p class="mu">Question ${Q.i+1}/${Q.a.length} · score ${Q.s}</p><div class="card"><h3>${q.q}</h3>${q.o.map((o,j)=>`<button class="op" onclick="ans(${j})">${o}</button>`).join("")}<p id="fb"></p></div>`}
+function ans(j){if(Q.done!==null)return;let q=Q.a[Q.i];Q.done=j;let ok=q.o[j]==q.c;if(ok)Q.s++;
+ document.querySelectorAll(".op").forEach((b,k)=>{b.disabled=true;if(q.o[k]==q.c)b.classList.add("good");else if(k==j)b.classList.add("wrong")});
+ $("#fb").innerHTML=(ok?"✅ Correct. ":"❌ Correct answer: <b>"+q.c+"</b>. ")+`<button onclick="Q.i++;Q.done=null;quiz()">${Q.i+1>=Q.a.length?"Finish":"Next"} →</button>`}
+
+function tools(){
+ $("#v").innerHTML=`<div class="card"><h3>IPv4 subnet calculator</h3><div class="row"><input id="ip" value="192.168.10.77" aria-label="IPv4 address"><select id="pf">${[...Array(33).keys()].map(i=>`<option value="${i}"${i==26?" selected":""}>/${i}</option>`).join("")}</select><button onclick="calc()">Calculate</button></div><div id="co" class="sc"></div></div>
+<div class="card"><h3>Size it</h3><div class="row"><input id="nh" type="number" min="1" placeholder="hosts needed"><button onclick="sz()">Prefix for hosts</button></div><div class="row"><input id="ns" type="number" min="1" placeholder="subnets needed"><input id="bp" type="number" min="0" max="30" placeholder="starting /prefix, e.g. 16"><button onclick="sb()">Bits to borrow</button></div><div id="so"></div></div>
+<div class="card"><h3>IPv6 tools</h3><div class="row"><input id="v6" value="2001:0db8:0000:1111:0000:0000:0000:0200" aria-label="IPv6 address"><button onclick="v6c()">Abbreviate</button></div><div id="vo"></div><div class="row"><input id="mac" value="fc:99:47:75:ce:e0" aria-label="MAC address"><button onclick="eui()">MAC → EUI-64 / LLA</button></div><div id="eo"></div></div>`;calc();v6c();eui()}
+function calc(){let n=ip2n($("#ip").value),p=+$("#pf").value;if(n===null){$("#co").textContent="Enter a valid IPv4 address.";return}
+ let m=p?(0xffffffff<<(32-p))>>>0:0,net=(n&m)>>>0,bc=(net|~m)>>>0,h=32-p,
+ t=n>>>24==10?"Private (10.0.0.0/8)":n>>>20==0xAC1?"Private (172.16.0.0/12)":n>>>16==0xC0A8?"Private (192.168.0.0/16)":n>>>24==127?"Loopback (127.0.0.0/8)":n>>>16==0xA9FE?"Link-local / APIPA (169.254.0.0/16)":n>>>28==14?"Multicast (Class D)":n>>>28==15?"Reserved (Class E)":"Public";
+ $("#co").innerHTML=`<pre>IP    ${bin(n)}\nMask  ${bin(m)}\nAND   ${bin(net)}</pre><table><tr><td>Mask<td>${n2ip(m)} (/${p})<tr><td>Network<td>${n2ip(net)}<tr><td>Broadcast<td>${n2ip(bc)}<tr><td>First – last usable<td>${h>1?n2ip(net+1)+" – "+n2ip(bc-1):"n/a (/31 point-to-point, /32 single host)"}<tr><td>Usable hosts<td>${h>1?(2**h-2).toLocaleString():"–"}<tr><td>Type<td>${t}</table>`}
+function sz(){let N=+$("#nh").value;if(!(N>0))return;let h=2;while(2**h-2<N)h++;$("#so").innerHTML=`${N} hosts → ${h} host bits → <b>/${32-h}</b> (${mk(32-h)}), ${(2**h-2).toLocaleString()} usable`}
+function sb(){let S=+$("#ns").value,v=$("#bp").value,p=+v,b=0;if(!(S>0)||v==="")return;while(2**b<S)b++;$("#so").innerHTML=`${S} subnets → borrow <b>${b}</b> bits (2^${b} = ${2**b}) → new prefix <b>/${p+b}</b>${p+b>30?" – too long (max /30)":""}`}
+function ab(s){s=s.trim().toLowerCase();let h;if(s.split("::").length>2)return null;
+ if(s.includes("::")){let[a,b]=s.split("::"),x=a?a.split(":"):[],y=b?b.split(":"):[];if(x.length+y.length>7)return null;h=[...x,...Array(8-x.length-y.length).fill("0"),...y]}else h=s.split(":");
+ if(h.length!=8||h.some(x=>!/^[0-9a-f]{1,4}$/.test(x)))return null;
+ h=h.map(x=>x.replace(/^0+(?=.)/,""));let bs=-1,bl=1,i=0;
+ while(i<8){if(h[i]=="0"){let j=i;while(j<8&&h[j]=="0")j++;if(j-i>bl){bl=j-i;bs=i}i=j}else i++}
+ return bs<0?h.join(":"):h.slice(0,bs).join(":")+"::"+h.slice(bs+bl).join(":")}
+function v6c(){let r=ab($("#v6").value);$("#vo").innerHTML=r?`→ <code>${r}</code>`:"Enter a valid IPv6 address."}
+function eui(){let h=$("#mac").value.replace(/[:.\-\s]/g,"");if(!/^[0-9a-f]{12}$/i.test(h)){$("#eo").textContent="Enter a 48-bit MAC (12 hex digits).";return}
+ let b=h.match(/../g).map(x=>parseInt(x,16));b[0]^=2;let x=[b[0],b[1],b[2],255,254,b[3],b[4],b[5]],g=[];
+ for(let i=0;i<8;i+=2)g.push((x[i]*256+x[i+1]).toString(16));
+ $("#eo").innerHTML=`Interface ID <code>${g.join(":")}</code><br>Link-local <code>fe80::${g.join(":")}</code>`}
+draw();
+</script></body></html>
